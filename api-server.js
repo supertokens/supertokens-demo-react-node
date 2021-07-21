@@ -8,8 +8,8 @@ let EmailPassword = require("supertokens-node/recipe/emailpassword");
 
 const apiPort = process.env.REACT_APP_API_PORT || 3001;
 const apiDomain = process.env.REACT_APP_API_URL || `http://localhost:${apiPort}`;
-const websitePort = process.env.REACT_APP_WEBSITE_PORT || 3000;
-const websiteDomain = process.env.REACT_APP_WEBSITE_URL || `http://localhost:${websitePort}`
+// const websitePort = process.env.REACT_APP_WEBSITE_PORT || 3000;
+const websiteDomain = "https://10021e39b20a.ngrok.io"; // process.env.REACT_APP_WEBSITE_URL || `http://localhost:${websitePort}`
 
 supertokens.init({
     supertokens: {
