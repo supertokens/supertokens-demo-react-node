@@ -30,7 +30,7 @@ const app = express();
 
 
 app.use(cors({
-    origin: websiteDomain,
+    origin: [websiteDomain, "https://10021e39b20a.ngrok.io"],
     allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
     methods: ["GET", "PUT", "POST", "DELETE"],
     credentials: true,
