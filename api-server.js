@@ -11,6 +11,19 @@ const apiDomain = process.env.REACT_APP_API_URL || `http://localhost:${apiPort}`
 const websitePort = process.env.REACT_APP_WEBSITE_PORT || 3000;
 const websiteDomain = process.env.REACT_APP_WEBSITE_URL || `http://localhost:${websitePort}`
 
+/**
+ * 
+ * @param {Response} res 
+ */
+function updateHeaders(res) {
+    const cookies = res.getHeader("Set-Cookie");
+    if (cookies) {
+        res.setHeader("st-cookie", cookies);
+    }
+    res.setHeader("access-control-expose-headers", `st-cookie, ${res.getHeader("access-control-expose-headers")}`);
+    res.removeHeader("Set-Cookie"); // This is not strictly necessary
+}
+
 supertokens.init({
     supertokens: {
         connectionURI: "https://try.supertokens.io",
@@ -22,8 +35,75 @@ supertokens.init({
     },
     recipeList: [
         EmailPassword.init(),
-        Session.init()
-    ]
+        Session.init({
+        // CSRF protection is not necessary in this case, because there are no cookies that would be automatically sent
+            antiCsrf: "NONE",
+            override: {
+                functions: (origImpl) => {
+                    return {
+                        ...origImpl,
+
+                        createNewSession: async (input) => {
+                            const session = await origImpl.createNewSession(input);
+
+                            updateHeaders(session.res);
+
+                            return session;
+                        },
+
+                        getSession: async (input) => {
+                            const stCookies = input.req.headers["st-cookie"];
+
+                            if (stCookies) {
+                                input.req.headers["cookie"] = input.req.headers["st-cookie"];
+                            }
+                            const res = origImpl.getSession(input);
+
+                            updateHeaders(input.res);
+
+                            return res;
+                        },
+                    };
+                },
+
+                apis: (origImpl) => {
+                    return {
+                        ...origImpl,
+
+                        signOutPOST: async (input) => {
+                            await origImpl.signOutPOST(input);
+
+                            updateHeaders(input.options.res);
+                        },
+
+                        verifySession: async (input) => {
+                            const stCookies = input.options.req.headers["st-cookie"];
+
+                            if (stCookies) {
+                                input.options.req.headers["cookie"] = input.options.req.headers["st-cookie"];
+                            }
+
+                            await origImpl.verifySession(input);
+
+                            updateHeaders(input.options.res);
+                        },
+
+                        refreshPOST: async (input) => {
+                            const stCookies = input.options.req.headers["st-cookie"];
+
+                            if (stCookies) {
+                                input.options.req.headers["cookie"] = input.options.req.headers["st-cookie"];
+                            }
+
+                            await origImpl.refreshPOST(input);
+
+                            updateHeaders(input.options.res);
+                        },
+                    };
+                },
+            },
+        }),
+    ],
 });
 
 const app = express();
@@ -31,7 +111,7 @@ const app = express();
 
 app.use(cors({
     origin: websiteDomain,
-    allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
+    allowedHeaders: ["content-type", "st-cookie", ...supertokens.getAllCORSHeaders()],
     methods: ["GET", "PUT", "POST", "DELETE"],
     credentials: true,
 }));

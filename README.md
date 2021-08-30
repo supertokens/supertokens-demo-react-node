@@ -3,12 +3,21 @@
 
 # SuperTokens Demo app
 
-This demo app demonstrates the following use cases:
+This demo app demonstrates the following use cases while using *no cookies*:
 - Login
 - Sign up
 - Logout
 - Forgot password flow
 - Session management & Calling APIs
+- Using localstorage instead of cookies to store tokens
+
+Storing tokens in localstorage comes with a few drawbacks: 
+- Increased damage potentaial of XSS attacks, because they can now access the longer term refresh token
+- Expired tokens are not automatically removed
+- No session info during server side rendering
+- You can't share sessions across subdomains
+
+For a detailed comparison please see [our blog](https://supertokens.io/blog/cookies-vs-localstorage-for-sessions-everything-you-need-to-know)
 
 ## Project setup
 
