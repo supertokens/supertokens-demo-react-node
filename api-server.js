@@ -5,6 +5,8 @@ const helmet = require("helmet");
 require('dotenv').config();
 let supertokens = require("supertokens-node");
 let Session = require("supertokens-node/recipe/session");
+let { verifySession } = require("supertokens-node/recipe/session/framework/express");
+let { middleware, errorHandler } = require("supertokens-node/framework/express");
 let ThirdParty = require("supertokens-node/recipe/thirdparty");
 
 const apiPort = process.env.REACT_APP_API_PORT || 3001;
@@ -13,6 +15,7 @@ const websitePort = process.env.REACT_APP_WEBSITE_PORT || 3000;
 const websiteDomain = process.env.REACT_APP_WEBSITE_URL || `http://localhost:${websitePort}`
 
 supertokens.init({
+    framework: "express",
     supertokens: {
         connectionURI: "https://try.supertokens.io",
     },
@@ -60,10 +63,10 @@ app.use(morgan("dev"));
 app.use(helmet({
     contentSecurityPolicy: false,
 }));
-app.use(supertokens.middleware());
+app.use(middleware());
 
 // custom API that requires session verification
-app.get("/sessioninfo", Session.verifySession(), async (req, res) => {
+app.get("/sessioninfo", verifySession(), async (req, res) => {
     let session = req.session;
     res.send({
         sessionHandle: session.getHandle(),
@@ -73,7 +76,7 @@ app.get("/sessioninfo", Session.verifySession(), async (req, res) => {
     });
 });
 
-app.use(supertokens.errorHandler());
+app.use(errorHandler());
 
 app.use((err, req, res, next) => {
     res.status(500).send("Internal error: " + err.message);
